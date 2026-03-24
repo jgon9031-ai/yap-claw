@@ -1,0 +1,119 @@
+Metadata-Version: 2.4
+Name: amos-harness
+Version: 0.1.0
+Summary: AMOS — Autonomous Meta-Orchestration System. A hybrid AI harness that routes queries between local and cloud models, learns from outcomes, and improves routing over time.
+License-Expression: MIT
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: openai>=1.0
+Requires-Dist: pydantic>=2.0
+Provides-Extra: dev
+Requires-Dist: pytest>=8.0; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.23; extra == "dev"
+
+# AMOS — Autonomous Meta-Orchestration System
+
+AMOS is a lightweight hybrid AI harness that intelligently routes queries between local (Ollama) and cloud (Claude/GPT) models. It records outcomes in a persistent memory layer and uses past experience to improve routing decisions over time — a practical implementation inspired by the arXiv paper ["Why AI systems do not learn and what to do about it"](https://arxiv.org/abs/2603.15381).
+
+## Architecture
+
+```
+                         ┌─────────────────┐
+                         │    User Query    │
+                         └────────┬────────┘
+                                  │
+                         ┌────────▼────────┐
+                         │   System M      │
+                         │   (Router)      │
+                         │                 │
+                         │ 1. Privacy      │
+                         │ 2. Past failure │
+                         │ 3. Complexity   │
+                         └───┬─────────┬───┘
+                             │         │
+                    local    │         │   cloud
+                 ┌───────────▼──┐  ┌───▼───────────┐
+                 │   Ollama     │  │  Claude / GPT  │
+                 │  (on-device) │  │   (API call)   │
+                 └───────┬──────┘  └───┬────────────┘
+                         │             │
+                         └──────┬──────┘
+                                │
+                       ┌────────▼────────┐
+                       │  Memory Layer   │
+                       │   (SQLite +     │
+                       │    FTS5)        │
+                       └────────┬────────┘
+                                │
+                       ┌────────▼────────┐
+                       │    Response     │
+                       └─────────────────┘
+```
+
+### Routing Logic (System M)
+
+1. **Privacy check** — queries containing personal keywords stay local
+2. **Past failure check** — if local models fail often on similar queries, escalate to cloud
+3. **Complexity heuristic** — long, multi-question, keyword-heavy queries route to cloud
+4. **Default** — prefer local for cost and latency
+
+## Quick Start
+
+```bash
+# Install
+pip install -e ".[dev]"
+
+# Ensure Ollama is running with a model
+ollama pull qwen2.5-coder:7b
+
+# Set cloud API key (optional, only needed for cloud routing)
+export OPENAI_API_KEY=sk-...
+
+# Run example
+python examples/basic_usage.py
+
+# Run tests
+pytest
+```
+
+## Usage
+
+```python
+from amos import AMOS
+
+amos = AMOS(config={
+    "local_model": "qwen2.5-coder:7b",
+    "cloud_model": "gpt-4o-mini",
+})
+
+# Personal query -> routes to local automatically
+response = amos.run("내 체중 기록을 분석해줘")
+print(response.routing_decision.target)  # "local"
+
+# Complex query -> routes to cloud
+response = amos.run("Analyze and compare microservices vs monolithic architectures")
+print(response.routing_decision.target)  # "cloud"
+
+# Provide feedback to improve future routing
+amos.feedback(response, success=True)
+
+# Check memory stats
+print(amos.stats())
+```
+
+## Configuration
+
+| Key | Default | Description |
+|-----|---------|-------------|
+| `memory_db` | `~/.amos/memory.db` | SQLite database path |
+| `local_base_url` | `http://localhost:11434/v1` | Ollama API endpoint |
+| `local_model` | `qwen2.5-coder:7b` | Local model name |
+| `cloud_model` | `gpt-4o-mini` | Cloud model name |
+| `cloud_base_url` | *(OpenAI default)* | Cloud API endpoint |
+| `cloud_api_key` | *(from env)* | API key (or set `OPENAI_API_KEY`) |
+
+## Paper Reference
+
+> "Why AI systems do not learn and what to do about it"
+> arXiv:2603.15381
+> https://arxiv.org/abs/2603.15381
