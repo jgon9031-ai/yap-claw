@@ -210,8 +210,8 @@ python3 examples/dashboard_demo.py
 | v0.1 | ✅ Done | Router, Memory, Executor |
 | v0.2 | ✅ Done | SessionAnalyzer (Hermes), SkillHealthTracker (cognee) |
 | v0.3 | ✅ Done | Ollama real integration, CLI Dashboard |
-| v0.4 | 🔜 Next | Power-SLO correlation model |
-| v0.5 | 📋 Planned | iOS SDK integration |
+| v0.4 | 📋 TBD | TBD |
+| v0.5 | 📋 TBD | TBD |
 
 ---
 
