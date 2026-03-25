@@ -1,13 +1,6 @@
 <div align="center">
 
-```
- __   __ _   _   ____     ____  _        _    __        __
- \ \ / // \ | | |  _ \   / ___|| |      / \   \ \      / /
-  \ V // _ \| | | |_) | | |    | |     / _ \   \ \ /\ / / 
-   | |/ ___ | |_|  __/  | |___ | |___ / ___ \   \ V  V /  
-   |_/_/   \_\___| |      \____||_____/_/   \_\   \_/\_/   
-                  |_|                                        
-```
+<img src="assets/banner.jpg" alt="YAP-CLAW Banner" width="100%"/>
 
 **Yappy Agent Picking Cloud or Local Automatically & Wisely**
 
