@@ -73,7 +73,8 @@ class TestFailureRouting:
     def test_high_failure_rate_routes_cloud(
         self, memory: MemoryLayer, router: AMOSRouter
     ) -> None:
-        # Seed memory with failures for a specific topic
+        # Seed memory with failures — NEST majority vote will also detect cloud preference
+        # when local keeps failing. Seed with enough failures to tip both NEST and failure check.
         for _ in range(8):
             memory.record(
                 query_text="explain quantum computing basics",
@@ -94,7 +95,8 @@ class TestFailureRouting:
         query = Query(text="explain quantum computing")
         decision = router.route(query)
         assert decision.target == "cloud"
-        assert "failure" in decision.reason.lower()
+        # NEST pattern or failure rate should trigger cloud routing
+        assert "NEST" in decision.reason or "failure" in decision.reason.lower()
 
     def test_low_failure_rate_stays_local(
         self, memory: MemoryLayer, router: AMOSRouter

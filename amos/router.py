@@ -15,14 +15,27 @@ from amos.models import Query, RoutingDecision
 
 # Keywords indicating personal/private content — must stay local
 PERSONAL_KEYWORDS: list[str] = [
-    "나의", "내", "my", "personal", "private",
-    "체중", "식단", "건강", "비밀번호",
+    # Korean
+    "나의", "내", "나한테", "내가", "체중", "몸무게", "식단", "건강",
+    "비밀번호", "사주", "이명", "귀마개", "로수바스타틴", "고지혈",
+    "칼로리", "운동 기록", "오늘 먹은",
+    # English
+    "my ", "mine", "personal", "private", "secret",
+    "password", "medical", "health record", "diary",
+    "salary", "bank account", "ssn", "home address",
 ]
 
-# Keywords indicating complex reasoning — prefer cloud
+# Keywords indicating complex reasoning — prefer CLAW (cloud)
 COMPLEX_KEYWORDS: list[str] = [
-    "analyze", "compare", "explain", "research", "summarize",
-    "분석", "비교", "설명", "조사", "요약",
+    # English
+    "analyze", "compare", "evaluate", "summarize", "explain",
+    "research", "pros and cons", "write a report", "translate",
+    "debug", "refactor", "step by step", "what are the implications",
+    "implement", "build", "create a", "design",
+    # Korean
+    "분석", "비교", "설명", "조사", "요약", "연구",
+    "추천해줘", "알려줘", "구현해줘", "만들어줘", "짜줘",
+    "논문", "리서치", "조사해", "수립해", "설계",
 ]
 
 # Threshold above which local failure rate triggers cloud routing
@@ -31,8 +44,11 @@ FAILURE_RATE_THRESHOLD = 0.6
 # Query length (chars) above which we consider it complex
 LENGTH_THRESHOLD = 200
 
-# Number of complex keywords that tips the scale
-COMPLEX_KEYWORD_THRESHOLD = 2
+# NEST: minimum similar experiences needed to trust majority vote
+NEST_MIN_SAMPLES = 3
+
+# NEST: cloud ratio threshold to route to cloud based on history
+NEST_CLOUD_RATIO_THRESHOLD = 0.65
 
 
 class AMOSRouter:
@@ -83,16 +99,35 @@ class AMOSRouter:
                     confidence=0.80,
                 )
 
-        # 3. Past failure: if local has been failing on similar queries, escalate
+        # 3. NEST majority vote — use only SUCCESSFUL past experiences
+        similar = self._memory.retrieve_similar(query.text, top_k=7)
+        successful = [e for e in similar if e.success]
+        if len(successful) >= NEST_MIN_SAMPLES:
+            cloud_count = sum(1 for e in successful if e.target == "cloud")
+            cloud_ratio = cloud_count / len(successful)
+            if cloud_ratio >= NEST_CLOUD_RATIO_THRESHOLD:
+                return RoutingDecision(
+                    target="cloud",
+                    reason=f"NEST pattern: {cloud_count}/{len(successful)} successful similar queries were handled by CLAW",
+                    confidence=0.75 + cloud_ratio * 0.15,
+                )
+            elif cloud_ratio <= (1 - NEST_CLOUD_RATIO_THRESHOLD):
+                return RoutingDecision(
+                    target="local",
+                    reason=f"NEST pattern: {len(successful)-cloud_count}/{len(successful)} successful similar queries were handled by PAW",
+                    confidence=0.75 + (1 - cloud_ratio) * 0.15,
+                )
+
+        # 4. Past failure: if PAW has been failing on similar queries, escalate to CLAW
         failure_rate = self._memory.get_local_failure_rate(query.text)
         if failure_rate > FAILURE_RATE_THRESHOLD:
             return RoutingDecision(
                 target="cloud",
-                reason=f"Local failure rate {failure_rate:.0%} for similar queries — escalating to cloud",
+                reason=f"PAW failure rate {failure_rate:.0%} for similar queries — escalating to CLAW",
                 confidence=0.85,
             )
 
-        # 4. Complexity: score the query and route accordingly
+        # 5. Complexity: score the query and route accordingly
         score = self._complexity_score(text_lower)
         if score >= 0.6:
             return RoutingDecision(
@@ -101,7 +136,7 @@ class AMOSRouter:
                 confidence=0.7 + score * 0.2,
             )
 
-        # 5. Default: prefer local for cost and latency
+        # 6. Default: prefer PAW for cost and latency
         return RoutingDecision(
             target="local",
             reason="Default routing — local preferred for speed and cost",
