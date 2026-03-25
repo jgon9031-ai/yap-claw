@@ -7,6 +7,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
+from amos.mood import MoodContext
+
 
 class Query(BaseModel):
     """An incoming query to be routed and executed."""
@@ -32,6 +34,7 @@ class Experience(BaseModel):
     model_used: str
     success: bool
     latency_ms: int
+    mood: str | None = None
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
@@ -42,6 +45,7 @@ class Response(BaseModel):
     model_used: str
     latency_ms: int
     routing_decision: RoutingDecision
+    mood_context: MoodContext | None = None
 
 
 # --- Self-Improving Loop models ---

@@ -51,6 +51,7 @@ class MemoryLayer:
             END;
         """)
         self._conn.commit()
+        self._migrate_mood_column()
 
     def record(
         self,
@@ -59,13 +60,14 @@ class MemoryLayer:
         model_used: str,
         success: bool,
         latency_ms: int,
+        mood: str | None = None,
     ) -> None:
         """Save an experience to the memory layer."""
         now = datetime.now(timezone.utc).isoformat()
         self._conn.execute(
-            """INSERT INTO experiences (query_text, target, model_used, success, latency_ms, timestamp)
-               VALUES (?, ?, ?, ?, ?, ?)""",
-            (query_text, target, model_used, int(success), latency_ms, now),
+            """INSERT INTO experiences (query_text, target, model_used, success, latency_ms, timestamp, mood)
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            (query_text, target, model_used, int(success), latency_ms, now, mood),
         )
         self._conn.commit()
 
@@ -158,9 +160,27 @@ class MemoryLayer:
 
         return {"total_records": total, "per_target": per_target}
 
+    def mood_breakdown(self) -> dict[str, int]:
+        """Return {mood: count} breakdown from the experiences table."""
+        rows = self._conn.execute(
+            """SELECT COALESCE(mood, 'neutral') as mood_val, COUNT(*) as cnt
+               FROM experiences
+               GROUP BY mood_val
+               ORDER BY cnt DESC"""
+        ).fetchall()
+        return {r["mood_val"]: r["cnt"] for r in rows}
+
     def close(self) -> None:
         """Close the database connection."""
         self._conn.close()
+
+    def _migrate_mood_column(self) -> None:
+        """Add mood column if it doesn't exist (backward-compatible migration)."""
+        cursor = self._conn.execute("PRAGMA table_info(experiences)")
+        columns = {row["name"] for row in cursor.fetchall()}
+        if "mood" not in columns:
+            self._conn.execute("ALTER TABLE experiences ADD COLUMN mood TEXT")
+            self._conn.commit()
 
     @staticmethod
     def _fts_query(text: str) -> str:
@@ -174,11 +194,17 @@ class MemoryLayer:
 
     @staticmethod
     def _row_to_experience(row: sqlite3.Row) -> Experience:
+        mood_val = None
+        try:
+            mood_val = row["mood"]
+        except (IndexError, KeyError):
+            pass
         return Experience(
             query_text=row["query_text"],
             target=row["target"],
             model_used=row["model_used"],
             success=bool(row["success"]),
             latency_ms=row["latency_ms"],
+            mood=mood_val,
             timestamp=datetime.fromisoformat(row["timestamp"]),
         )

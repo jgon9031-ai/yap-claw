@@ -114,6 +114,23 @@ class RoutingDashboard:
             },
         }
 
+    def mood_breakdown(self) -> str:
+        """Return a formatted text summary of mood distribution."""
+        raw = self._memory.mood_breakdown()
+        if not raw:
+            return "  No mood data recorded yet."
+
+        total = sum(raw.values())
+        lines: list[str] = ["  Mood distribution:"]
+
+        for mood_val, count in raw.items():
+            pct = count / total * 100
+            bar_width = max(1, round(pct / 5))  # ~1 char per 5%
+            bar = "\u2588" * bar_width if pct >= 3 else "\u2591"
+            lines.append(f"    {mood_val:<12}: {count:>3} ({pct:4.0f}%)  {bar}")
+
+        return "\n".join(lines)
+
     def _gather_stats(self) -> dict:
         """Query the memory layer and compute dashboard data."""
         conn = self._memory._conn

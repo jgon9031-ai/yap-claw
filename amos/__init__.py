@@ -27,6 +27,7 @@ from amos.exceptions import (
     ModelNotFoundError,
 )
 from amos.health import SkillHealthTracker
+from amos.mood import MoodContext, MoodDetector, MoodState
 
 __all__ = [
     "AMOS",
@@ -38,6 +39,9 @@ __all__ = [
     "HealthIssue",
     "LocalUnavailableError",
     "ModelNotFoundError",
+    "MoodContext",
+    "MoodDetector",
+    "MoodState",
     "Query",
     "Response",
     "RoutingAmendment",

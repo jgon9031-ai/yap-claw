@@ -11,6 +11,7 @@ from amos.executor import CloudExecutor, LocalExecutor
 from amos.health import SkillHealthTracker
 from amos.memory import MemoryLayer
 from amos.models import Experience, Query, Response
+from amos.mood import MoodDetector
 from amos.router import AMOSRouter
 
 logger = logging.getLogger("amos")
@@ -37,6 +38,9 @@ class AMOS:
 
         # Cloud executor is lazy-initialized — only created when first needed
         self._cloud: CloudExecutor | None = None
+
+        # Mood detection
+        self._mood_detector = MoodDetector()
 
         # Self-improving subsystems
         self._analyzer = SessionAnalyzer(
@@ -76,6 +80,7 @@ class AMOS:
             The model's response with routing information.
         """
         query = Query(text=query_text, metadata=metadata or {})
+        mood_ctx = self._mood_detector.detect_with_context(query_text)
         decision = self._router.route(query)
 
         logger.info(
@@ -108,6 +113,7 @@ class AMOS:
                 model_used="error",
                 success=False,
                 latency_ms=0,
+                mood=mood_ctx.mood.value,
             )
             self._health.observe(
                 Experience(
@@ -120,6 +126,9 @@ class AMOS:
             )
             raise
 
+        # Attach mood context to response
+        response.mood_context = mood_ctx
+
         # Record successful experience
         self._memory.record(
             query_text=query_text,
@@ -127,6 +136,7 @@ class AMOS:
             model_used=response.model_used,
             success=success,
             latency_ms=response.latency_ms,
+            mood=mood_ctx.mood.value,
         )
 
         # Feed to health tracker
