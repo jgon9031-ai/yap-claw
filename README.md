@@ -215,20 +215,6 @@ python3 examples/dashboard_demo.py
 
 ---
 
-## 📄 Paper
-
-This project is accompanied by an arXiv preprint:
-
-**AMOS: Experience-Based Routing for Hybrid LLM Deployment with SLO Adaptation**  
-JAE GON KIM (Xenoscube AI) — March 2026  
-[View on arXiv](https://arxiv.org/abs/2603.15381) · [Download PDF](https://github.com/jgon9031-ai/yap-claw)
-
----
-
-## License
-
-MIT © 2026 JAE GON KIM / Xenoscube AI
-
 ---
 
 <div align="center">
