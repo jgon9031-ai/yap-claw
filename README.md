@@ -53,7 +53,7 @@ Install [Ollama](https://ollama.com) to run **PAW** on your device:
 curl -fsSL https://ollama.com/install.sh | sh
 
 # Pull a model for PAW
-ollama pull qwen2.5-coder:7b   # Recommended — strong coding + reasoning
+ollama pull qwen3.5:4b   # Recommended — the model actually used in practice
 
 # Or lighter alternatives
 ollama pull llama3.2:3b        # Fast, general purpose
@@ -62,7 +62,7 @@ ollama pull mistral:7b          # Strong reasoning
 
 # Verify
 ollama list
-ollama run qwen2.5-coder:7b "Say hello"
+ollama run qwen3.5:4b "Say hello"
 ```
 
 > PAW connects to Ollama's OpenAI-compatible API at `http://localhost:11434/v1` by default.
@@ -156,7 +156,7 @@ YAP-CLAW is designed for rigorous agent comparison. Run the same query through b
 from amos import AMOS
 
 yc = AMOS(config={
-    "local": {"model": "qwen2.5-coder:7b"},  # PAW
+    "local": {"model": "qwen3.5:4b"},  # PAW
     "cloud": {"model": "gpt-4o-mini"},         # CLAW
 })
 
