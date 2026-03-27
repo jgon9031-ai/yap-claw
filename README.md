@@ -36,41 +36,9 @@ Unlike static routers, **YAP** learns from the **NEST** — past failures, succe
 
 ## Architecture
 
-```
-              ╔══════════════════════════════════════════════════╗
-              ║                YAP-CLAW Harness                  ║
-              ║                                                  ║
-  query  ───► ║  ┌──────────────────────────────────────────┐   ║
-              ║  │         🧠  YAP  (Router)                 │   ║
-              ║  │                                          │   ║
-              ║  │  1. 🔒 Privacy check                     │   ║
-              ║  │  2. 📉 Past PAW failure rate             │   ║
-              ║  │  3. 🧮 Complexity heuristic score        │   ║
-              ║  │  4. 💾 NEST hints (experience)           │   ║
-              ║  └─────────────────┬────────────────────────┘   ║
-              ║                    │                             ║
-              ║           ┌────────┴────────┐                   ║
-              ║           ▼                 ▼                   ║
-              ║  ┌────────────────┐ ┌────────────────┐         ║
-              ║  │  🖥️  PAW       │ │  ☁️  CLAW      │         ║
-              ║  │  (Local)       │ │  (Cloud)       │         ║
-              ║  │                │ │                │         ║
-              ║  │  • Ollama      │ │  • OpenAI GPT  │         ║
-              ║  │  • qwen2.5     │ │  • Claude      │         ║
-              ║  │  • llama3      │ │  • Gemini      │         ║
-              ║  │  • mistral     │ │  • Any OAI-    │         ║
-              ║  │  • phi3        │ │    compatible  │         ║
-              ║  └───────┬────────┘ └────────┬───────┘         ║
-              ║          └─────────┬──────────┘                ║
-              ║                    ▼                            ║
-              ║  ┌─────────────────────────────────────────┐   ║
-              ║  │          💾 NEST  (Memory)               │   ║
-              ║  │   SQLite + FTS5 experience store        │   ║
-              ║  │   Records: query · agent · result       │   ║
-              ║  │   YAP gets smarter on every query 📈    │   ║
-              ║  └─────────────────────────────────────────┘   ║
-              ╚══════════════════════════════════════════════════╝
-```
+<div align="center">
+<img src="assets/architecture.jpg" alt="YAP-CLAW Architecture" width="480"/>
+</div>
 
 ---
 
