@@ -37,7 +37,7 @@ Unlike static routers, **YAP** learns from the **NEST** — past failures, succe
 ## Architecture
 
 <div align="center">
-  <img src="assets/architecture-demo.gif" alt="YAP-CLAW Architecture Demo" width="480"/>
+  <img src="assets/architecture-demo.gif" alt="YAP-CLAW Architecture Demo" width="100%"/>
 </div>
 
 ---
